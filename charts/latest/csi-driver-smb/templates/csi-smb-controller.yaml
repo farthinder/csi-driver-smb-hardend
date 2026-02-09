@@ -167,6 +167,7 @@ spec:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
           securityContext:
+            readOnlyRootFilesystem: true
             capabilities:
               add:
                 - SYS_ADMIN
@@ -176,7 +177,11 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
+            - mountPath: /tmp
+              name: tmp-dir
           resources: {{- toYaml .Values.controller.resources.smb | nindent 12 }}
       volumes:
         - name: socket-dir
+          emptyDir: {}
+        - name: tmp-dir
           emptyDir: {}

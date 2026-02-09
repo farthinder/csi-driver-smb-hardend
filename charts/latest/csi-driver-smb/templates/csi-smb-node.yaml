@@ -124,6 +124,7 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           securityContext:
+            readOnlyRootFilesystem: true
             capabilities:
               add:
                 - SYS_ADMIN
@@ -141,6 +142,8 @@ spec:
               mountPropagation: Bidirectional
               name: krb5cache-dir
 {{- end }}
+            - mountPath: /tmp
+              name: tmp-dir
           resources: {{- toYaml .Values.linux.resources.smb | nindent 12 }}
       volumes:
         - hostPath:
@@ -161,4 +164,6 @@ spec:
             type: DirectoryOrCreate
           name: krb5cache-dir
 {{- end }}
+        - name: tmp-dir
+          emptyDir: {}
 {{- end -}}
