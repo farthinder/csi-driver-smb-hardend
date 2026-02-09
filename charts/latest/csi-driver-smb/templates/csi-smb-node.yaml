@@ -129,7 +129,7 @@ spec:
               add:
                 - SYS_ADMIN
               drop:
-              - ALL
+                - ALL
             allowPrivilegeEscalation: false
           volumeMounts:
             - mountPath: /csi
