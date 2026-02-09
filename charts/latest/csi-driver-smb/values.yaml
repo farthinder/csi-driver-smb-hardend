@@ -45,7 +45,7 @@ feature:
 controller:
   name: csi-smb-controller
   replicas: 1
-  dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+  dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
   metricsPort: 29644
   livenessProbe:
     healthPort: 29642
@@ -105,7 +105,7 @@ node:
 linux:
   enabled: true
   dsName: csi-smb-node # daemonset name
-  dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+  dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
   kubelet: /var/lib/kubelet
   krb5CacheDirectory: "" # directory for kerberos credential cache, empty string means default(/var/lib/kubelet/kerberos/)
   krb5Prefix: "" # prefix for kerberos credential cache, empty string means default(krb5cc_)

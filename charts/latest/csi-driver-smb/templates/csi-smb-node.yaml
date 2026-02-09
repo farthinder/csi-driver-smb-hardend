@@ -29,7 +29,6 @@ spec:
       affinity:
 {{ toYaml . | indent 8 }}
 {{- end }}    
-      hostNetwork: true
       dnsPolicy: {{ .Values.linux.dnsPolicy }}
       serviceAccountName: {{ .Values.serviceAccount.node }}
       nodeSelector:
@@ -125,10 +124,12 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           securityContext:
-            privileged: true
             capabilities:
+              add:
+                - SYS_ADMIN
               drop:
               - ALL
+            allowPrivilegeEscalation: false
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
