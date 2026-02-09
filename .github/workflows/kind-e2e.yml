@@ -1,0 +1,92 @@
+name: Kind E2E Test
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'deploy/csi-smb-**.yaml'
+      - 'charts/latest/csi-driver-smb/**'
+      - 'test/kind-e2e/**'
+      - '.github/workflows/kind-e2e.yml'
+  workflow_dispatch:
+
+jobs:
+  kind-e2e-test:
+    name: Kind E2E Test with External SMB and DNS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+          version: v0.20.0
+      
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+      
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+      
+      - name: Verify Docker
+        run: |
+          docker --version
+          docker ps
+      
+      - name: Run Kind E2E Test
+        run: |
+          cd test/kind-e2e
+          ./run-kind-e2e-test.sh
+        env:
+          KUBERNETES_VERSION: v1.29.0
+          KIND_VERSION: v0.20.0
+      
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Kind Cluster Info ==="
+          kind get clusters || true
+          kubectl cluster-info || true
+          
+          echo "=== Kubernetes Nodes ==="
+          kubectl get nodes -o wide || true
+          
+          echo "=== All Pods ==="
+          kubectl get pods -A || true
+          
+          echo "=== CSI Driver Pods ==="
+          kubectl get pods -n kube-system -l app.kubernetes.io/name=csi-driver-smb -o wide || true
+          
+          echo "=== Controller Pod Logs ==="
+          kubectl logs -n kube-system -l app=csi-smb-controller --all-containers --tail=100 || true
+          
+          echo "=== Node Pod Logs ==="
+          kubectl logs -n kube-system -l app=csi-smb-node --all-containers --tail=100 || true
+          
+          echo "=== Test Resources ==="
+          kubectl get pvc,pv,pod || true
+          kubectl describe pvc smb-pvc || true
+          kubectl describe pod smb-test-pod || true
+          
+          echo "=== Events ==="
+          kubectl get events --sort-by='.lastTimestamp' || true
+          
+          echo "=== SMB Server Container ==="
+          docker logs smb-server --tail=100 || true
+          
+          echo "=== DNS Server Container ==="
+          docker logs dns-server --tail=100 || true
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          # Cleanup is handled by the test script trap
+          echo "Cleanup handled by test script"
