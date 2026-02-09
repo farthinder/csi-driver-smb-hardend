@@ -120,7 +120,7 @@ setup_smb_server() {
     sleep 5
     
     # Test SMB server connectivity
-    if docker exec ${SMB_SERVER_NAME} smbclient -L localhost -U "${SMB_USERNAME}%${SMB_PASSWORD}" -N &>/dev/null; then
+    if docker exec ${SMB_SERVER_NAME} smbclient -L localhost -U "${SMB_USERNAME}%${SMB_PASSWORD}" &>/dev/null; then
         log "SMB server is ready at ${smb_ip}"
         echo "${smb_ip}" > /tmp/smb_server_ip
     else
