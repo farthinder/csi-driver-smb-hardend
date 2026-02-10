@@ -17,6 +17,7 @@ spec:
       labels:
         app: csi-smb-node
     spec:
+      hostNetwork: true
       dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
       serviceAccountName: csi-smb-node-sa
       nodeSelector:
@@ -45,7 +46,6 @@ spec:
               cpu: 10m
               memory: 20Mi
           securityContext:
-            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -72,7 +72,6 @@ spec:
               cpu: 10m
               memory: 20Mi
           securityContext:
-            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -100,21 +99,17 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           securityContext:
-            readOnlyRootFilesystem: true
             capabilities:
               add:
                 - SYS_ADMIN
               drop:
                 - ALL
-            allowPrivilegeEscalation: false
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
             - mountPath: /var/lib/kubelet/
               mountPropagation: Bidirectional
               name: mountpoint-dir
-            - mountPath: /tmp
-              name: tmp-dir
           resources:
             limits:
               memory: 200Mi
@@ -134,6 +129,4 @@ spec:
             path: /var/lib/kubelet/plugins_registry/
             type: DirectoryOrCreate
           name: registration-dir
-        - name: tmp-dir
-          emptyDir: {}
 ---

@@ -42,9 +42,24 @@ feature:
   enableGetVolumeStats: true
   enableInlineVolume: true
 
+## Security Settings
+## For enhanced security, consider setting:
+##   controller.hostNetwork: false
+##   controller.readOnlyRootFilesystem: true
+##   controller.allowPrivilegeEscalation: false
+##   linux.hostNetwork: false  
+##   node.readOnlyRootFilesystem: true
+##   node.allowPrivilegeEscalation: false
+## Note: When readOnlyRootFilesystem is enabled, /tmp will be automatically
+##       mounted as emptyDir for temporary credential files.
+
 controller:
   name: csi-smb-controller
   replicas: 1
+  # hostNetwork: Enable host network for controller pods
+  # Setting to false (more secure) isolates pods from host network stack
+  # Default: true for backwards compatibility
+  hostNetwork: true
   dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
   metricsPort: 29644
   livenessProbe:
@@ -53,6 +68,15 @@ controller:
   runOnControlPlane: false
   logLevel: 5
   workingMountDir: "/tmp"
+  # Security settings for controller containers
+  # readOnlyRootFilesystem: Make container filesystems read-only (more secure)
+  # When enabled, /tmp will be mounted as emptyDir for temporary files
+  # Default: false for backwards compatibility
+  readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: Prevent privilege escalation in containers
+  # Setting to false (more secure) prevents processes from gaining more privileges
+  # Default: true for backwards compatibility (allows escalation)
+  allowPrivilegeEscalation: true
   resources:
     csiProvisioner:
       limits:
@@ -101,10 +125,23 @@ node:
     healthPort: 29643
   affinity: {}
   nodeSelector: {}
+  # Security settings for node containers
+  # readOnlyRootFilesystem: Make container filesystems read-only (more secure)
+  # When enabled, /tmp will be mounted as emptyDir for temporary files
+  # Default: false for backwards compatibility
+  readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: Prevent privilege escalation in containers
+  # Setting to false (more secure) prevents processes from gaining more privileges
+  # Default: true for backwards compatibility (allows escalation)
+  allowPrivilegeEscalation: true
 
 linux:
   enabled: true
   dsName: csi-smb-node # daemonset name
+  # hostNetwork: Enable host network for node pods
+  # Setting to false (more secure) isolates pods from host network stack
+  # Default: true for backwards compatibility
+  hostNetwork: true
   dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
   kubelet: /var/lib/kubelet
   krb5CacheDirectory: "" # directory for kerberos credential cache, empty string means default(/var/lib/kubelet/kerberos/)

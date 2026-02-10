@@ -28,7 +28,10 @@ spec:
 {{- with .Values.node.affinity }}
       affinity:
 {{ toYaml . | indent 8 }}
-{{- end }}    
+{{- end }}
+{{- if .Values.linux.hostNetwork }}
+      hostNetwork: true
+{{- end }}
       dnsPolicy: {{ .Values.linux.dnsPolicy }}
       serviceAccountName: {{ .Values.serviceAccount.node }}
       nodeSelector:
@@ -63,7 +66,9 @@ spec:
           imagePullPolicy: {{ .Values.image.livenessProbe.pullPolicy }}
           resources: {{- toYaml .Values.linux.resources.livenessProbe | nindent 12 }}
           securityContext:
+{{- if .Values.node.readOnlyRootFilesystem }}
             readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -90,6 +95,9 @@ spec:
               mountPath: /registration
           resources: {{- toYaml .Values.linux.resources.nodeDriverRegistrar | nindent 12 }}
           securityContext:
+{{- if .Values.node.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -124,13 +132,17 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           securityContext:
+{{- if .Values.node.readOnlyRootFilesystem }}
             readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               add:
                 - SYS_ADMIN
               drop:
                 - ALL
+{{- if not .Values.node.allowPrivilegeEscalation }}
             allowPrivilegeEscalation: false
+{{- end }}
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -142,8 +154,10 @@ spec:
               mountPropagation: Bidirectional
               name: krb5cache-dir
 {{- end }}
+{{- if .Values.node.readOnlyRootFilesystem }}
             - mountPath: /tmp
               name: tmp-dir
+{{- end }}
           resources: {{- toYaml .Values.linux.resources.smb | nindent 12 }}
       volumes:
         - hostPath:
@@ -164,6 +178,8 @@ spec:
             type: DirectoryOrCreate
           name: krb5cache-dir
 {{- end }}
+{{- if .Values.node.readOnlyRootFilesystem }}
         - name: tmp-dir
           emptyDir: {}
+{{- end }}
 {{- end -}}
