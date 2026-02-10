@@ -45,7 +45,9 @@ spec:
                   operator: Exists
                 {{- end}}
     {{- end }}
+{{- if .Values.controller.hostNetwork }}
       hostNetwork: true
+{{- end }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}
       serviceAccountName: {{ .Values.serviceAccount.controller }}
       nodeSelector:
@@ -89,7 +91,9 @@ spec:
               name: socket-dir
           resources: {{- toYaml .Values.controller.resources.csiProvisioner | nindent 12 }}
           securityContext:
+{{- if .Values.controller.readOnlyRootFilesystem }}
             readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -115,6 +119,9 @@ spec:
               mountPath: /csi
           resources: {{- toYaml .Values.controller.resources.csiResizer | nindent 12 }}
           securityContext:
+{{- if .Values.controller.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -135,7 +142,9 @@ spec:
               mountPath: /csi
           resources: {{- toYaml .Values.controller.resources.livenessProbe | nindent 12 }}
           securityContext:
+{{- if .Values.controller.readOnlyRootFilesystem }}
             readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -168,14 +177,33 @@ spec:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
           securityContext:
-            privileged: true
+{{- if .Values.controller.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
+{{- if .Values.controller.capabilities.add }}
+              add:
+{{- toYaml .Values.controller.capabilities.add | nindent 16 }}
+{{- end }}
+{{- if .Values.controller.capabilities.drop }}
               drop:
-              - ALL
+{{- toYaml .Values.controller.capabilities.drop | nindent 16 }}
+{{- end }}
+{{- if not .Values.controller.allowPrivilegeEscalation }}
+            allowPrivilegeEscalation: false
+{{- end }}
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
+{{- if .Values.controller.readOnlyRootFilesystem }}
+            - mountPath: /tmp
+              name: tmp-dir
+{{- end }}
           resources: {{- toYaml .Values.controller.resources.smb | nindent 12 }}
       volumes:
         - name: socket-dir
           emptyDir: {}
+{{- if .Values.controller.readOnlyRootFilesystem }}
+        - name: tmp-dir
+          emptyDir: {}
+{{- end }}

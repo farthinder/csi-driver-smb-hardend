@@ -28,8 +28,10 @@ spec:
 {{- with .Values.node.affinity }}
       affinity:
 {{ toYaml . | indent 8 }}
-{{- end }}    
+{{- end }}
+{{- if .Values.linux.hostNetwork }}
       hostNetwork: true
+{{- end }}
       dnsPolicy: {{ .Values.linux.dnsPolicy }}
       serviceAccountName: {{ .Values.serviceAccount.node }}
       nodeSelector:
@@ -64,7 +66,9 @@ spec:
           imagePullPolicy: {{ .Values.image.livenessProbe.pullPolicy }}
           resources: {{- toYaml .Values.linux.resources.livenessProbe | nindent 12 }}
           securityContext:
+{{- if .Values.node.readOnlyRootFilesystem }}
             readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -91,6 +95,9 @@ spec:
               mountPath: /registration
           resources: {{- toYaml .Values.linux.resources.nodeDriverRegistrar | nindent 12 }}
           securityContext:
+{{- if .Values.node.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
               drop:
               - ALL
@@ -125,10 +132,21 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           securityContext:
-            privileged: true
+{{- if .Values.node.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: true
+{{- end }}
             capabilities:
+{{- if .Values.node.capabilities.add }}
+              add:
+{{- toYaml .Values.node.capabilities.add | nindent 16 }}
+{{- end }}
+{{- if .Values.node.capabilities.drop }}
               drop:
-              - ALL
+{{- toYaml .Values.node.capabilities.drop | nindent 16 }}
+{{- end }}
+{{- if not .Values.node.allowPrivilegeEscalation }}
+            allowPrivilegeEscalation: false
+{{- end }}
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -139,6 +157,10 @@ spec:
             - mountPath: {{ .Values.linux.kubelet }}/kerberos/
               mountPropagation: Bidirectional
               name: krb5cache-dir
+{{- end }}
+{{- if .Values.node.readOnlyRootFilesystem }}
+            - mountPath: /tmp
+              name: tmp-dir
 {{- end }}
           resources: {{- toYaml .Values.linux.resources.smb | nindent 12 }}
       volumes:
@@ -159,5 +181,9 @@ spec:
             path: {{ .Values.linux.krb5CacheDirectory }}
             type: DirectoryOrCreate
           name: krb5cache-dir
+{{- end }}
+{{- if .Values.node.readOnlyRootFilesystem }}
+        - name: tmp-dir
+          emptyDir: {}
 {{- end }}
 {{- end -}}

@@ -42,10 +42,33 @@ feature:
   enableGetVolumeStats: true
   enableInlineVolume: true
 
+## Security Settings
+## For enhanced security, consider setting:
+##   controller.hostNetwork: false
+##   controller.readOnlyRootFilesystem: true
+##   controller.allowPrivilegeEscalation: false
+##   linux.hostNetwork: false  
+##   node.readOnlyRootFilesystem: true
+##   node.allowPrivilegeEscalation: false
+##
+## Capability settings (already at secure defaults):
+##   controller.capabilities.drop: ["ALL"]  # Drop all capabilities
+##   controller.capabilities.add: ["SYS_ADMIN"]  # Required for mount operations
+##   node.capabilities.drop: ["ALL"]  # Drop all capabilities
+##   node.capabilities.add: ["SYS_ADMIN"]  # Required for mount operations
+##
+## WARNING: Removing SYS_ADMIN will break the CSI driver functionality
+## Note: When readOnlyRootFilesystem is enabled, /tmp will be automatically
+##       mounted as emptyDir for temporary credential files.
+
 controller:
   name: csi-smb-controller
   replicas: 1
-  dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+  # hostNetwork: Enable host network for controller pods
+  # Setting to false (more secure) isolates pods from host network stack
+  # Default: true for backwards compatibility
+  hostNetwork: true
+  dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
   metricsPort: 29644
   livenessProbe:
     healthPort: 29642
@@ -53,6 +76,25 @@ controller:
   runOnControlPlane: false
   logLevel: 5
   workingMountDir: "/tmp"
+  # Security settings for controller containers
+  # readOnlyRootFilesystem: Make container filesystems read-only (more secure)
+  # When enabled, /tmp will be mounted as emptyDir for temporary files
+  # Default: false for backwards compatibility
+  readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: Prevent privilege escalation in containers
+  # Setting to false (more secure) prevents processes from gaining more privileges
+  # Default: true for backwards compatibility (allows escalation)
+  allowPrivilegeEscalation: true
+  # Linux capabilities for containers
+  # WARNING: Do not change these defaults unless you have a specific requirement
+  # - drop: Capabilities to drop from containers (recommended: ["ALL"])
+  # - add: Capabilities to add back to SMB container (required: ["SYS_ADMIN"] for mount operations)
+  # Removing SYS_ADMIN will break CSI driver functionality
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - SYS_ADMIN
   resources:
     csiProvisioner:
       limits:
@@ -101,11 +143,34 @@ node:
     healthPort: 29643
   affinity: {}
   nodeSelector: {}
+  # Security settings for node containers
+  # readOnlyRootFilesystem: Make container filesystems read-only (more secure)
+  # When enabled, /tmp will be mounted as emptyDir for temporary files
+  # Default: false for backwards compatibility
+  readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: Prevent privilege escalation in containers
+  # Setting to false (more secure) prevents processes from gaining more privileges
+  # Default: true for backwards compatibility (allows escalation)
+  allowPrivilegeEscalation: true
+  # Linux capabilities for containers
+  # WARNING: Do not change these defaults unless you have a specific requirement
+  # - drop: Capabilities to drop from containers (recommended: ["ALL"])
+  # - add: Capabilities to add back to SMB container (required: ["SYS_ADMIN"] for mount operations)
+  # Removing SYS_ADMIN will break CSI driver functionality
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - SYS_ADMIN
 
 linux:
   enabled: true
   dsName: csi-smb-node # daemonset name
-  dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+  # hostNetwork: Enable host network for node pods
+  # Setting to false (more secure) isolates pods from host network stack
+  # Default: true for backwards compatibility
+  hostNetwork: true
+  dnsPolicy: ClusterFirst  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
   kubelet: /var/lib/kubelet
   krb5CacheDirectory: "" # directory for kerberos credential cache, empty string means default(/var/lib/kubelet/kerberos/)
   krb5Prefix: "" # prefix for kerberos credential cache, empty string means default(krb5cc_)
