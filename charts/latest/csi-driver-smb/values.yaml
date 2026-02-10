@@ -50,6 +50,14 @@ feature:
 ##   linux.hostNetwork: false  
 ##   node.readOnlyRootFilesystem: true
 ##   node.allowPrivilegeEscalation: false
+##
+## Capability settings (already at secure defaults):
+##   controller.capabilities.drop: ["ALL"]  # Drop all capabilities
+##   controller.capabilities.add: ["SYS_ADMIN"]  # Required for mount operations
+##   node.capabilities.drop: ["ALL"]  # Drop all capabilities
+##   node.capabilities.add: ["SYS_ADMIN"]  # Required for mount operations
+##
+## WARNING: Removing SYS_ADMIN will break the CSI driver functionality
 ## Note: When readOnlyRootFilesystem is enabled, /tmp will be automatically
 ##       mounted as emptyDir for temporary credential files.
 
@@ -77,6 +85,16 @@ controller:
   # Setting to false (more secure) prevents processes from gaining more privileges
   # Default: true for backwards compatibility (allows escalation)
   allowPrivilegeEscalation: true
+  # Linux capabilities for containers
+  # WARNING: Do not change these defaults unless you have a specific requirement
+  # - drop: Capabilities to drop from containers (recommended: ["ALL"])
+  # - add: Capabilities to add back to SMB container (required: ["SYS_ADMIN"] for mount operations)
+  # Removing SYS_ADMIN will break CSI driver functionality
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - SYS_ADMIN
   resources:
     csiProvisioner:
       limits:
@@ -134,6 +152,16 @@ node:
   # Setting to false (more secure) prevents processes from gaining more privileges
   # Default: true for backwards compatibility (allows escalation)
   allowPrivilegeEscalation: true
+  # Linux capabilities for containers
+  # WARNING: Do not change these defaults unless you have a specific requirement
+  # - drop: Capabilities to drop from containers (recommended: ["ALL"])
+  # - add: Capabilities to add back to SMB container (required: ["SYS_ADMIN"] for mount operations)
+  # Removing SYS_ADMIN will break CSI driver functionality
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - SYS_ADMIN
 
 linux:
   enabled: true

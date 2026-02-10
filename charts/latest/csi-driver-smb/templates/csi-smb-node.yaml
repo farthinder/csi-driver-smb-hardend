@@ -136,10 +136,14 @@ spec:
             readOnlyRootFilesystem: true
 {{- end }}
             capabilities:
+{{- if .Values.node.capabilities.add }}
               add:
-                - SYS_ADMIN
+{{- toYaml .Values.node.capabilities.add | nindent 16 }}
+{{- end }}
+{{- if .Values.node.capabilities.drop }}
               drop:
-                - ALL
+{{- toYaml .Values.node.capabilities.drop | nindent 16 }}
+{{- end }}
 {{- if not .Values.node.allowPrivilegeEscalation }}
             allowPrivilegeEscalation: false
 {{- end }}
